@@ -8,7 +8,7 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "prepare": "if [ \"$VITE_MODE\" != \"production\" ]; then husky; fi"
+    "prepare": "test \"$NODE_ENV\" != \"production\" && npx husky install || echo 'Skipping husky in production'"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
@@ -33,7 +33,7 @@
     "dompurify": "^3.2.4",
     "dotenv": "^16.4.7",
     "leaflet": "^1.9.4",
-    "multer": "^1.4.5-lts.1",
+    "multer": "^1.4.5-lts.2",
     "nodemailer": "^6.9.16",
     "react-calendar": "^5.1.0",
     "react-icons": "^5.3.0",
