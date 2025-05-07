@@ -10,7 +10,7 @@ var salt = process.env.SALT_BCRYPT;
 
 export const UserSeed = async() => {
   try {
-    const existingUser = await User.findOne({  email: 'sitioAdmin@familiadositio.com.br' });
+    const existingUser = await User.findOne({  email: process.env.MAIL_FIRST_ADMIN });
     if (existingUser) {
       console.log("> USER SEED: Usuário Administrador já existe. Nenhuma ação necessária.");
       return;

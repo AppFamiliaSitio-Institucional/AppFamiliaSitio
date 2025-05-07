@@ -1,6 +1,7 @@
 import sacService from "../services/sac.service.js";
 import nodemailerService from "../services/nodemailer.service.js";
 import fs from "fs/promises";
+import { assuntoEmailMap } from "../config/emails.config.js";
 
 import mongoose from "mongoose";
 
@@ -16,8 +17,8 @@ const createSac = async (req, res) => {
     const sac = await sacService.createService(data);
 
     if (!sac) {
-      return res.status(400).send({ message: 'Dados não salvo!' });
-    };
+      return res.status(400).send({ message: "Dados não salvo!" });
+    }
 
     let emailSetor;
 
@@ -38,93 +39,56 @@ const createSac = async (req, res) => {
       </div>
     `;
 
-
     const assuntoEmail = `${sac.assunto} - ${sac.incrementalId}`;
     // Configura os anexos se houver
     const attachments = req.file
-      ? [{
-        filename: req.file.originalname, // Nome original do arquivo
-        path: req.file.path // Caminho onde o arquivo foi salvo
-      }]
+      ? [
+          {
+            filename: req.file.originalname, // Nome original do arquivo
+            path: req.file.path, // Caminho onde o arquivo foi salvo
+          },
+        ]
       : [];
 
-    // Envia o e-mail
-    switch (assunto) {
-      case 'Sugestao':
-        const emailSugestao1 = process.env.MAIL_SUGESTAO_1;
-        const emailSugestao2 = process.env.MAIL_SUGESTAO_2;
-        const emailSugestao3 = process.env.MAIL_SUGESTAO_3;
-
-        await nodemailerService.send(emailSugestao1, assuntoEmail, emailBody, attachments);
-        await nodemailerService.send(emailSugestao2, assuntoEmail, emailBody, attachments);
-        await nodemailerService.send(emailSugestao3, assuntoEmail, emailBody, attachments);
-
-        break;
-      case 'Elogio':
-        const emailElogio1 = process.env.MAIL_ELOGIO_1;
-        const emailElogio2 = process.env.MAIL_ELOGIO_2;
-        const emailElogio3 = process.env.MAIL_ELOGIO_3;
-
-        await nodemailerService.send(emailElogio1, assuntoEmail, emailBody, attachments);
-        await nodemailerService.send(emailElogio2, assuntoEmail, emailBody, attachments);
-        await nodemailerService.send(emailElogio3, assuntoEmail, emailBody, attachments);
-        break;
-      case 'Duvida':
-        const emailDuvida1 = process.env.MAIL_DUVIDA_1;
-        const emailDuvida2 = process.env.MAIL_DUVIDA_2;
-        const emailDuvida3 = process.env.MAIL_DUVIDA_3;
-
-        await nodemailerService.send(emailDuvida1, assuntoEmail, emailBody, attachments);
-        await nodemailerService.send(emailDuvida2, assuntoEmail, emailBody, attachments);
-        await nodemailerService.send(emailDuvida3, assuntoEmail, emailBody, attachments);
-        break;
-      case 'Reclamacao':
-        const emailReclamacao1 = process.env.MAIL_RECLAMACAO_1;
-        const emailReclamacao2 = process.env.MAIL_RECLAMACAO_2;
-        const emailReclamacao3 = process.env.MAIL_RECLAMACAO_3;
-        const emailReclamacao4 = process.env.MAIL_RECLAMACAO_4;
-
-        await nodemailerService.send(emailReclamacao1, assuntoEmail, emailBody, attachments);
-        await nodemailerService.send(emailReclamacao2, assuntoEmail, emailBody, attachments);
-        await nodemailerService.send(emailReclamacao3, assuntoEmail, emailBody, attachments);
-        await nodemailerService.send(emailReclamacao4, assuntoEmail, emailBody, attachments);
-        break;
-      case 'Parceria/Patrocinio':
-        const emailParceria1 = process.env.MAIL_PARCERIA_1;
-        const emailParceria2 = process.env.MAIL_PARCERIA_2;
-        const emailParceria3 = process.env.MAIL_PARCERIA_3;
-
-        await nodemailerService.send(emailParceria1, assuntoEmail, emailBody, attachments);
-        await nodemailerService.send(emailParceria2, assuntoEmail, emailBody, attachments);
-        await nodemailerService.send(emailParceria3, assuntoEmail, emailBody, attachments);
-        break;
-      default:
-        return res.status(400).send({ message: 'Houve algum erro no campo assunto' });
+    const emailDestinatarios = assuntoEmailMap[assunto];
+    if (!emailDestinatarios) {
+      return res.status(400).send({ message: "Assunto inválido" });
     }
-    
+
+    await Promise.all(
+      emailDestinatarios.map((email) =>
+        nodemailerService.send(email, assuntoEmail, emailBody, attachments)
+      )
+    );
 
     if (req.file) {
       try {
         await fs.unlink(req.file.path); // Deleta o arquivo
         console.log(`Arquivo ${req.file.path} deletado com sucesso.`);
       } catch (deleteError) {
-        console.error(`Erro ao deletar o arquivo ${req.file.path}:`, deleteError.message);
+        console.error(
+          `Erro ao deletar o arquivo ${req.file.path}:`,
+          deleteError.message
+        );
       }
     }
 
-    res.status(200).send({ message: 'Dados salvos com sucesso!', sac: sac });
-
+    res.status(200).send({ message: "Dados salvos com sucesso!", sac: sac });
   } catch (err) {
-    res.status(500).send({ message: 'Ocorreu um erro ao enviar o email =>', err: err.message })
+    res
+      .status(500)
+      .send({
+        message: "Ocorreu um erro ao enviar o email =>",
+        err: err.message,
+      });
   }
-}
-
+};
 
 const findAllSac = async (req, res) => {
   const sacs = await sacService.findAllService();
 
   if (sacs.length === 0) {
-    return res.status(400).send({ message: 'Não há nenhum sac no momento' });
+    return res.status(400).send({ message: "Não há nenhum sac no momento" });
   }
 
   res.send(sacs);
@@ -136,12 +100,13 @@ const findAssuntoSac = async (req, res) => {
   const sacs = await sacService.findByAssunto(assunto);
 
   if (sacs.length === 0) {
-    return res.status(400).send({ message: 'Não há nenhum sac deste tipo no momento' });
+    return res
+      .status(400)
+      .send({ message: "Não há nenhum sac deste tipo no momento" });
   }
 
   res.send(sacs);
 };
-
 
 const deleteSacById = async (req, res) => {
   const id = req.params.id;
@@ -154,19 +119,21 @@ const deleteSacById = async (req, res) => {
     const result = await sacService.deleteById(id);
 
     if (result.deletedCount > 0) {
-      return res.send({ message: 'SAC deletado com sucesso.' });
+      return res.send({ message: "SAC deletado com sucesso." });
     } else {
-      return res.send({ message: 'Nenhum SAC encontrado para o id fornecido.' });
+      return res.send({
+        message: "Nenhum SAC encontrado para o id fornecido.",
+      });
     }
-
   } catch (error) {
-    console.error('Erro ao deletar SAC:', error);
-    return res.status(500).send({ message: "Erro interno ao tentar deletar o SAC." });
+    console.error("Erro ao deletar SAC:", error);
+    return res
+      .status(500)
+      .send({ message: "Erro interno ao tentar deletar o SAC." });
   }
 };
 
 const findSacById = async (req, res) => {
-
   const id = req.params.id;
 
   //Conferir antes de tudo se o id é válido
@@ -184,7 +151,6 @@ const findSacById = async (req, res) => {
 };
 
 const updateSacStatus = async (req, res) => {
-
   const { status } = req.body;
 
   if (status === undefined) {
@@ -204,18 +170,15 @@ const updateSacStatus = async (req, res) => {
     return res.status(400).send({ message: "Sac nao encontrado" });
   }
 
-  await sacService.updateSacStatus(
-    id,
-    status
-  );
+  await sacService.updateSacStatus(id, status);
 
   res.send({ message: "Sac foi atualizado com sucesso" });
-}
+};
 
 export default {
   createSac,
   findAllSac,
   findAssuntoSac,
   deleteSacById,
-  updateSacStatus
+  updateSacStatus,
 };

@@ -15,12 +15,12 @@ const buscarProduto = async (nomeProduto) => {
 
         return response;
     } catch (err) {
-        if (error.response) {
-            console.error("Erro na resposta do servidor:", error.response.data);
-        } else if (error.request) {
-            console.error("Erro na requisição:", error.request);
+        if (err.response) {
+            console.error("Erro na resposta do servidor:", err.response.data);
+        } else if (err.request) {
+            console.error("Erro na requisição:", err.request);
         } else {
-            console.error("Erro ao configurar a requisição:", error.message);
+            console.error("Erro ao configurar a requisição:", err.message);
         }
         return { data: [] }; // Em caso de erro, também retorna um array vazio
     }
