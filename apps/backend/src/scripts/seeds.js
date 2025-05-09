@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({path: '../../.env'});
 
 // =====================================================
 // DEFINIÇÃO DE CRIPTOGRAFIA:
