@@ -12,9 +12,10 @@ const port = process.env.PORT || 3002;
 const app = express();
 
 const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'https://cafedositio.netlify.app'
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "https://adminfamiliadositio.onrender.com/",
+  'https://familiadositio.onrender.com/',
 ];
 
 const corsOptionsDelegate = function(req, callback) {
